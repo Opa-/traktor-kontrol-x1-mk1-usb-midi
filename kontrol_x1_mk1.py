@@ -1,3 +1,4 @@
+import array
 import multiprocessing
 
 import mido
@@ -28,21 +29,23 @@ class KontrolX1Mk1(multiprocessing.Process):
     def run(self):
         usb_device = usb.core.find(idVendor=USB_ID_VENDOR, idProduct=USB_ID_PRODUCT,
                                    custom_match=lambda dev: dev.serial_number == self.serial_number)
-        self.midi_out = mido.open_output('Traktor Virtual Input')
+        # self.midi_out = mido.open_output('Traktor Virtual Input')
         print(f"Running: {usb_device.serial_number}")
         fd = 0x1
+        buffer = array.array('B', '\x00'.encode('utf-8') * USB_READ_BUFFER_SIZE)
         while True:
             try:
-                state = usb_device.read(USB_STATE_FD, USB_READ_BUFFER_SIZE)
+                usb_device.read(USB_STATE_FD, buffer)
+                print(buffer)
                 # Sometimes the read bytearray is smaller than expected
                 # We need information about all the buttons and knobs to identify them based on array index.
                 # if len(state) == USB_READ_BUFFER_SIZE:
                 #     self.handle_state(state)
-                try:
-                    usb_device.write(0x1, [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
-                except Exception as e:
-                    pass
-                usb_device.read(0x81, 1)
+                # try:
+                #     usb_device.write(0x1, [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
+                # except Exception as e:
+                #     pass
+                # usb_device.read(0x81, 1)
             except (ValueError, USBError,) as e:
                 print(f"Exiting {fd} {self.serial_number} {e}")
                 continue
@@ -65,7 +68,7 @@ class KontrolX1Mk1HotPlugUsbHandler(object):
     midi_out: Output
 
     def __init__(self, midi_virtual_port_name: str):
-        self.midi_out = mido.open_output(midi_virtual_port_name)
+        # self.midi_out = mido.open_output(midi_virtual_port_name)
         self.controllers = dict()
 
     def loop(self):
