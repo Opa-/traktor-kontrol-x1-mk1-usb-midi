@@ -1,0 +1,1 @@
+This was an early POC for https://github.com/Opa-/x1-mk1-usb2midi
